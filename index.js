@@ -12,8 +12,6 @@ https://www.mantisbt.org/docs/master/en-US/Developers_Guide/html/restapi.html
 */
 
 const inquirer = require('inquirer');
-  
-console.log("mantis2github",'0.0.1');
 
 let questions = [
 	{
@@ -34,12 +32,52 @@ let questions = [
 	},
 	{	
 		type: 'input',
+    	name: 'githubOwner',
+		message: "Type the owner of the GitHub repo",
+	},
+	{	
+		type: 'input',
     	name: 'githubRepo',
 		message: "Type the destination GitHub repo",
 	},
 
 ];
 
-inquirer.prompt(questions).then(answers => {
-  console.log(answers);
-});
+inquirer.prompt(questions)
+	.then(answers => {
+		fetchMantisData(answers)
+			.then(data => filterByProject(data,answers.mantisProject))
+			.then(data => console.log(JSON.stringify(data,null,2)))
+			.catch( error => console.log(error))
+	});
+
+
+function fetchMantisData(params)
+{
+	const mantisFullURL= params.mantisbtURL + (params.mantisbtURL.endsWith('/') ? "api/rest/issues/" : "/api/rest/issues/");
+	const mantisInit = {
+		method:"GET",
+		mode: 'cors',
+		cache: 'default',
+		headers: {
+			"Authorization": params.mantisApiToken,
+	  	}
+	};
+  	return fetch(mantisFullURL,mantisInit)
+		.then((response) => response.json());
+}
+
+function filterByProject(data,projectName) {
+	let result = {issues:[]};
+	return new Promise((resolve,reject) => {
+		if (projectName.length == 0)
+			resolve(data);
+		data.issues.forEach((issue) => {
+			if (issue.project.name == projectName)
+			{
+				result.issues.push(issue);
+			}
+		});
+		resolve(result);
+	});
+}
