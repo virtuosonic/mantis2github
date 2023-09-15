@@ -1,0 +1,21 @@
+{
+  "name": "mantis2github",
+  "version": "0.0.1",
+  "description": "Mantis BT to GitHub issues migration script",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "github",
+    "mantis",
+    "issue",
+    "tools"
+  ],
+  "author": "Gabriel Espinoza <virtuosonic@github.com>",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "inquirer": "^8.0.0"
+  }
+}
