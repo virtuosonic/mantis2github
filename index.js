@@ -47,7 +47,8 @@ inquirer.prompt(questions)
 	.then(answers => {
 		fetchMantisData(answers)
 			.then(data => filterByProject(data,answers.mantisProject))
-			.then(data => console.log(JSON.stringify(data,null,2)))
+			//.then(data => console.log(JSON.stringify(data,null,2)))
+			.then(data => createGitHubIssues(data))
 			.catch( error => console.log(error))
 	});
 
@@ -67,17 +68,36 @@ function fetchMantisData(params)
 		.then((response) => response.json());
 }
 
-function filterByProject(data,projectName) {
-	let result = {issues:[]};
-	return new Promise((resolve,reject) => {
+function filterByProject(data,projectName)
+{
+	return new Promise((resolve,reject) => 
+	{
 		if (projectName.length == 0)
-			resolve(data);
+			resolve(data.issues);
+		let result = [];
 		data.issues.forEach((issue) => {
 			if (issue.project.name == projectName)
 			{
-				result.issues.push(issue);
+				result.push(issue);
 			}
 		});
 		resolve(result);
 	});
+}
+
+function createIssue() {
+	return new Promise((resolve,reject) => {
+		resolve(0);
+	});
+}
+
+function createGitHubIssues(data) 
+{
+	let promises = [];
+	console.log(JSON.stringify(data[0],null,2));
+	data.forEach((issue) => {
+		let p = createIssue(issue);
+		promises.push(p);
+	});
+	return Promise.all(promises);
 }
