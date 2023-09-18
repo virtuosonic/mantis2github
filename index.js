@@ -48,10 +48,12 @@ inquirer.prompt(questions)
 		fetchMantisData(answers)
 			.then(data => filterByProject(data,answers.mantisProject))
 			.then(data => extractUsers(data))
+			.then(data => substituteUsers(data))
 			.then(data => console.log(JSON.stringify(data,null,2)))
 			//.then(data => createGitHubIssues(data))
 			.catch( error => console.log(error))
-	});
+	})
+	.catch(error => console.error(error));
 
 
 function fetchMantisData(params)
@@ -102,6 +104,21 @@ function extractUsers(data)
 	});
 }
 
+function substituteUsers(data)
+{
+	return new Promise((resolve,reject) => {
+		console.log("Type the GitHub user that replace the Mantis user");
+		let _questions = [];
+		data.users.forEach((u) => _questions.push({type:'input',name:u.id,message:u.name + ':' + u.real_name + ':' + u.email}));
+		inquirer.prompt(_questions)
+			.then(_answers => {
+				data.users.forEach((u) => u.substitute = _answers[u.id] );
+				resolve(data);
+			})
+		.catch(error => console.error(error));
+		
+	});
+}
 
 
 function createIssue() {
