@@ -115,7 +115,7 @@ function substituteUsers(data)
 				data.users.forEach((u) => u.substitute = _answers[u.id] );
 				resolve(data);
 			})
-		.catch(error => console.error(error));
+			.catch(error => console.error(error));
 		
 	});
 }
@@ -137,3 +137,10 @@ function createGitHubIssues(data)
 	});
 	return Promise.all(promises);
 } 
+
+
+function createNotes() {
+	return new Promise((resolve,reject) => {
+		resolve(0);
+	});
+}
