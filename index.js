@@ -12,8 +12,9 @@ https://www.mantisbt.org/docs/master/en-US/Developers_Guide/html/restapi.html
 */
 
 const inquirer = require('inquirer');
+const ghApiVersion = '2022-11-28';
 
-let questions = [
+const questions = [
 	{
 		type: 'input',
     	name: 'mantisbtURL',
@@ -40,6 +41,11 @@ let questions = [
     	name: 'githubRepo',
 		message: "Type the destination GitHub repo",
 	},
+	{	
+		type: 'input',
+    	name: 'githubToken',
+		message: "Type your Personal Access Token",
+	},
 
 ];
 
@@ -49,8 +55,8 @@ inquirer.prompt(questions)
 			.then(data => filterByProject(data,answers.mantisProject))
 			.then(data => extractUsers(data))
 			.then(data => substituteUsers(data))
-			.then(data => console.log(JSON.stringify(data,null,2)))
-			//.then(data => createGitHubIssues(data))
+			//.then(data => console.log(JSON.stringify(data,null,2)))
+			.then(data => createGitHubIssues(data,answers))
 			.catch( error => console.log(error))
 	})
 	.catch(error => console.error(error));
@@ -120,19 +126,38 @@ function substituteUsers(data)
 	});
 }
 
-
-function createIssue() {
-	return new Promise((resolve,reject) => {
-		resolve(0);
-	});
+function createIssue(issue,params) {
+	params.init.body = {
+		"title": issue.summary,
+		"body": issue.description,
+	}
+	if (issue.hasOwnProperty("handler") && 
+		issue.handler.hasOwnProperty("substitute"))
+	{
+		params.init.body["assignees"] = [issue.handler.substitute];
+	}
+	return fetch(params.url,params.init);
 }
 
-function createGitHubIssues(data) 
+function createGitHubIssues(data,params) 
 {
+	const fetchParams = {
+		url: `https://api.github.com/repos/${params.githubOwner}/${params.githubRepo}/issues`,
+		init: {
+			method:"POST",
+			mode: 'cors',
+			cache: 'default',
+			headers: {
+				"Authorization": `Bearer ${params.githubToken}`,
+				"Accept": "application/vnd.github+json",
+				"X-GitHub-Api-Version": ghApiVersion
+	  		}
+		}
+	};
 	let promises = [];
-	console.log(JSON.stringify(data[0],null,2));
-	data.forEach((issue) => {
-		let p = createIssue(issue);
+	console.log(JSON.stringify(data.issues[0],null,2));
+	data.issues.forEach((issue) => {
+		let p = createIssue(issue,fetchParams);
 		promises.push(p);
 	});
 	return Promise.all(promises);
