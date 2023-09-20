@@ -1,6 +1,6 @@
 {
   "name": "mantis2github",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Mantis BT to GitHub issues migration script",
   "main": "index.js",
   "scripts": {
