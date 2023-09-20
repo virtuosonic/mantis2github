@@ -33,13 +33,8 @@ const questions = [
 	},
 	{	
 		type: 'input',
-    	name: 'githubOwner',
-		message: "Type the owner of the GitHub repo",
-	},
-	{	
-		type: 'input',
     	name: 'githubRepo',
-		message: "Type the destination GitHub repo",
+		message: "Type the destination GitHub repo (owner/repo)",
 	},
 	{	
 		type: 'input',
@@ -122,27 +117,34 @@ function substituteUsers(data)
 				resolve(data);
 			})
 			.catch(error => console.error(error));
-		
 	});
 }
 
-function createIssue(issue,params) {
-	params.init.body = {
+
+
+function createIssue(issue,params) 
+{
+	let issueInit = {...params.init};
+	issueInit.body = JSON.stringify({
 		"title": issue.summary,
 		"body": issue.description,
-	}
+	});
+	//todo: labels
 	if (issue.hasOwnProperty("handler") && 
 		issue.handler.hasOwnProperty("substitute"))
 	{
-		params.init.body["assignees"] = [issue.handler.substitute];
+		issueInit.body["assignees"] = [issue.handler.substitute];
 	}
-	return fetch(params.url,params.init);
+	return fetch(`https://api.github.com/repos/${params.repo}/issues`,issueInit)
+		.then(response => response.json())
+		.then(jsondata => createGitHubComments(issue,jsondata.number,params));
+	//todo: close issue if source issue is closed
 }
 
 function createGitHubIssues(data,params) 
 {
 	const fetchParams = {
-		url: `https://api.github.com/repos/${params.githubOwner}/${params.githubRepo}/issues`,
+		repo: params.githubRepo,
 		init: {
 			method:"POST",
 			mode: 'cors',
@@ -155,17 +157,30 @@ function createGitHubIssues(data,params)
 		}
 	};
 	let promises = [];
-	console.log(JSON.stringify(data.issues[0],null,2));
-	data.issues.forEach((issue) => {
-		let p = createIssue(issue,fetchParams);
-		promises.push(p);
-	});
+	data.issues.forEach((issue) => promises.push(createIssue(issue,fetchParams)) );
 	return Promise.all(promises);
 } 
 
 
-function createNotes() {
-	return new Promise((resolve,reject) => {
-		resolve(0);
-	});
+function createComment(note,githubIssueNumber,params)
+{
+	let noteInit = {...params.init};
+	noteInit.body = JSON.stringify({body: note.text});
+	const url = `https://api.github.com/repos/${params.repo}/issues/${githubIssueNumber}/comments`;
+	return fetch(url,noteInit)
+		.then(data => data.json());
+}
+
+async function createGitHubComments(issue,githubIssueNumber,params) 
+{
+	let responses = [];
+	if (!issue.hasOwnProperty('notes'))
+	{
+		return Promise.resolve([]);
+	}
+	for (const note of issue.notes)
+	{
+		responses.push(await createComment(note,githubIssueNumber,params));
+	}
+	return Promise.all(responses);
 }
