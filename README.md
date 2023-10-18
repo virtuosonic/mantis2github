@@ -6,6 +6,11 @@ Mantis BT to GitHub issues migration script
 - Node.js 18.16.1
 - inquirer ^8.0.0
 
+## Installing
+```
+npm i mantis2github
+```
+
 ## Usage
 Currently this script is a commandline wizard, 
 it will ask you your source and destination 
