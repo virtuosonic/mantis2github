@@ -120,14 +120,22 @@ function substituteUsers(data)
 	});
 }
 
-
+function issueTextBody(issue)
+{
+	let text = "## " + issue.description;
+	if(issue.hasOwnProperty('steps_to_reproduce'))
+		text += "\n### Step to reproduce" + "\n" + issue.steps_to_reproduce;
+	if(issue.hasOwnProperty('additional_information'))
+		text += "\n### Additional information\n" + issue.additional_information;
+	return text;
+}
 
 function createIssue(issue,params) 
 {
 	let issueInit = {...params.init};
 	issueInit.body = JSON.stringify({
 		"title": issue.summary,
-		"body": issue.description,
+		"body": issueTextBody(issue),
 	});
 	//todo: labels
 	if (issue.hasOwnProperty("handler") && 
