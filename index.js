@@ -48,17 +48,25 @@ inquirer.prompt(questions)
 	.then(answers => {
 		fetchMantisData(answers)
 			.then(data => filterByProject(data,answers.mantisProject))
-			.then(data => extractUsers(data))
-			.then(data => substituteUsers(data))
-			.then(data => createGitHubIssues(data,answers))
+			.then(data => {console.log(data.issues.length);})
+			//.then(data => extractUsers(data))
+			//.then(data => substituteUsers(data))
+			//.then(data => createGitHubIssues(data,answers))
 			.catch( error => console.log(error))
 	})
 	.catch(error => console.error(error));
 
+function getMantisFullUrl(url)
+{
+	return url + 
+		((url.endsWith('/') ? 
+			"api/rest/issues/" : "/api/rest/issues/"))
+		+ "?page_size=1000000000&page=1";
+}
 
 function fetchMantisData(params)
 {
-	const mantisFullURL= params.mantisbtURL + (params.mantisbtURL.endsWith('/') ? "api/rest/issues/" : "/api/rest/issues/");
+	const mantisFullURL = getMantisFullUrl(params.mantisbtURL);
 	const mantisInit = {
 		method:"GET",
 		mode: 'cors',
@@ -67,6 +75,7 @@ function fetchMantisData(params)
 			"Authorization": params.mantisApiToken,
 	  	}
 	};
+	console.log("fetch", mantisFullURL);
   	return fetch(mantisFullURL,mantisInit)
 		.then((response) => response.json());
 }
