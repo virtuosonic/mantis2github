@@ -129,6 +129,41 @@ function issueTextBody(issue)
 		text += "\n### Additional information\n" + issue.additional_information;
 	return text;
 }
+/*
+10 open
+20 fixed
+30 reopened
+40 unable to reproduce
+50 not fixable
+60 duplicate
+70 no change required
+80 suspended
+90 won't fix
+*/
+function createIssueResolution(issue,githubIssueNumber,params)
+{
+	let status = issue.status.id;
+	if(status == 80 || status == 90)
+	{
+		let resolution = issue.resolution.id;
+		if(resolution == 20)
+		{
+			//close as fixed/done/resolved
+
+		}
+		else
+		{
+			
+		}
+		let resolutionInit = {...params.init};
+		resolutionInit.method = "PATCH";
+		const updateIssueUrl = `https://api.github.com/repos/${params.repo}/issues/${githubIssueNumber}`;
+		return fetch(updateIssueUrl,resolutionInit)
+			.then(data => data.json());
+
+	}
+	return Promise.resolve(issue);
+}
 
 function createIssue(issue,params) 
 {
