@@ -1,6 +1,6 @@
 # mantis2github
 
-Mantis BT to GitHub issues migration script
+Mantis Bug Tracker to GitHub issues migration script
 
 ## Requirements
 - Node.js 18.16.1
