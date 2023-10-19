@@ -50,7 +50,6 @@ inquirer.prompt(questions)
 			.then(data => filterByProject(data,answers.mantisProject))
 			.then(data => extractUsers(data))
 			.then(data => substituteUsers(data))
-			//.then(data => console.log(JSON.stringify(data,null,2)))
 			.then(data => createGitHubIssues(data,answers))
 			.catch( error => console.log(error))
 	})
@@ -140,23 +139,18 @@ function issueTextBody(issue)
 80 suspended
 90 won't fix
 */
-function createIssueResolution(issue,githubIssueNumber,params)
+function createGithubIssueResolution(issue,githubIssueNumber,params)
 {
 	let status = issue.status.id;
 	if(status == 80 || status == 90)
 	{
 		let resolution = issue.resolution.id;
-		if(resolution == 20)
-		{
-			//close as fixed/done/resolved
-
-		}
-		else
-		{
-			
-		}
 		let resolutionInit = {...params.init};
 		resolutionInit.method = "PATCH";
+		resolutionInit.body = JSON.stringify({
+			"state": "closed",
+			"state_reason": resolution == 20 ? "completed" : "not_planned",
+		});
 		const updateIssueUrl = `https://api.github.com/repos/${params.repo}/issues/${githubIssueNumber}`;
 		return fetch(updateIssueUrl,resolutionInit)
 			.then(data => data.json());
@@ -165,7 +159,7 @@ function createIssueResolution(issue,githubIssueNumber,params)
 	return Promise.resolve(issue);
 }
 
-function createIssue(issue,params) 
+function createGithubIssue(issue,params) 
 {
 	let issueInit = {...params.init};
 	issueInit.body = JSON.stringify({
@@ -180,11 +174,11 @@ function createIssue(issue,params)
 	}
 	return fetch(`https://api.github.com/repos/${params.repo}/issues`,issueInit)
 		.then(response => response.json())
-		.then(jsondata => createGitHubComments(issue,jsondata.number,params));
-	//todo: close issue if source issue is closed
+		.then(jsondata => createGitHubComments(issue,jsondata.number,params))
+		.then(jsondata =>createGithubIssueResolution(issue,jsondata.number,params));
 }
 
-function createGitHubIssues(data,params) 
+function createGitHubIssues(data,params)
 {
 	const fetchParams = {
 		repo: params.githubRepo,
@@ -200,7 +194,7 @@ function createGitHubIssues(data,params)
 		}
 	};
 	let promises = [];
-	data.issues.forEach((issue) => promises.push(createIssue(issue,fetchParams)) );
+	data.issues.forEach((issue) => promises.push(createGithubIssue(issue,fetchParams)) );
 	return Promise.all(promises);
 } 
 
@@ -219,11 +213,13 @@ async function createGitHubComments(issue,githubIssueNumber,params)
 	let responses = [];
 	if (!issue.hasOwnProperty('notes'))
 	{
-		return Promise.resolve([]);
+		return Promise.resolve({number:githubIssueNumber});
 	}
 	for (const note of issue.notes)
 	{
 		responses.push(await createComment(note,githubIssueNumber,params));
 	}
-	return Promise.all(responses);
+	
+	return Promise.all(responses)
+		.then(values => Promise.resolve({number:githubIssueNumber,responses:values}));
 }
