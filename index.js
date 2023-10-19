@@ -48,10 +48,9 @@ inquirer.prompt(questions)
 	.then(answers => {
 		fetchMantisData(answers)
 			.then(data => filterByProject(data,answers.mantisProject))
-			.then(data => {console.log(data.issues.length);})
-			//.then(data => extractUsers(data))
-			//.then(data => substituteUsers(data))
-			//.then(data => createGitHubIssues(data,answers))
+			.then(data => extractUsers(data))
+			.then(data => substituteUsers(data))
+			.then(data => createGitHubIssues(data,answers))
 			.catch( error => console.log(error))
 	})
 	.catch(error => console.error(error));
