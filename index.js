@@ -44,7 +44,7 @@ const questions = [
 
 ];
 
-function randDelay() {
+function myDelay() {
 
 	return new Promise(resolve => setTimeout(resolve, 1000));
 }
@@ -177,7 +177,7 @@ async function createGithubIssueResolution(issue,githubIssueNumber,params)
 			"state": "closed",
 			"state_reason": resolution == 20 ? "completed" : "not_planned",
 		});
-		await randDelay();
+		await myDelay();
 		const updateIssueUrl = `https://api.github.com/repos/${params.repo}/issues/${githubIssueNumber}`;
 		return fetch(updateIssueUrl,resolutionInit)
 			.then(response => logAndReturnJson('issue resol',response));//data.json());
@@ -225,7 +225,7 @@ function createGitHubIssues(data,params)
 		
 		let createissue = await createGithubIssue(issue,fetchParams)
 		promises.push(createissue);
-		await randDelay();
+		await myDelay();
 	});
 	return Promise.all(promises);
 } 
@@ -250,7 +250,7 @@ async function createGitHubComments(issue,githubIssueNumber,params)
 	for (const note of issue.notes)
 	{
 		responses.push(await createComment(note,githubIssueNumber,params));
-		await randDelay();
+		await myDelay();
 	}
 	
 	return Promise.all(responses)
