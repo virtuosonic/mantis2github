@@ -180,7 +180,7 @@ async function createGithubIssueResolution(issue,githubIssueNumber,params)
 		await myDelay();
 		const updateIssueUrl = `https://api.github.com/repos/${params.repo}/issues/${githubIssueNumber}`;
 		const res = fetch(updateIssueUrl,resolutionInit)
-			.then(response => logAndReturnJson(response));
+			.then(response => logAndReturnJson('createGithubIssueResolution',response));
 		return res;
 	}
 	return Promise.resolve(issue);
