@@ -51,9 +51,9 @@ function myDelay() {
 
 function logAndReturnJson(name,res)
 {
-	console.log(name,res.status);
 	if(res.status > 299)
 	{
+		console.log(name,res.status);
 		return res.json().then(data => {
 			console.log('json',data);
 			return Promise.reject("failed");
@@ -94,7 +94,7 @@ function fetchMantisData(params)
 	  	}
 	};
   	return fetch(mantisFullURL,mantisInit)
-		.then(response => logAndReturnJson('fetchmantis',response))// response.json());
+		.then(response => logAndReturnJson('fetchMantisData',response));
 }
 
 function filterByProject(data,projectName)
@@ -179,9 +179,9 @@ async function createGithubIssueResolution(issue,githubIssueNumber,params)
 		});
 		await myDelay();
 		const updateIssueUrl = `https://api.github.com/repos/${params.repo}/issues/${githubIssueNumber}`;
-		return fetch(updateIssueUrl,resolutionInit)
-			.then(response => logAndReturnJson('issue resol',response));//data.json());
-
+		const res = fetch(updateIssueUrl,resolutionInit)
+			.then(response => logAndReturnJson(response));
+		return res;
 	}
 	return Promise.resolve(issue);
 }
@@ -193,19 +193,18 @@ function createGithubIssue(issue,params)
 		"title": issue.summary,
 		"body": issueTextBody(issue),
 	});
-	//todo: labels
 	if (issue.hasOwnProperty("handler") && 
 		issue.handler.hasOwnProperty("substitute"))
 	{
 		issueInit.body["assignees"] = [issue.handler.substitute];
 	}
 	return fetch(`https://api.github.com/repos/${params.repo}/issues`,issueInit)
-		.then(response => logAndReturnJson("create issue",response))
+		.then(response => logAndReturnJson("createGithubIssue",response))
 		.then(jsondata => createGitHubComments(issue,jsondata.number,params))
 		.then(jsondata =>createGithubIssueResolution(issue,jsondata.number,params));
 }
 
-function createGitHubIssues(data,params)
+async function createGitHubIssues(data,params)
 {
 	const fetchParams = {
 		repo: params.githubRepo,
@@ -221,12 +220,18 @@ function createGitHubIssues(data,params)
 		}
 	};
 	let promises = [];
-	data.issues.forEach(async (issue) => {
-		
-		let createissue = await createGithubIssue(issue,fetchParams)
-		promises.push(createissue);
-		await myDelay();
-	});
+	for (const issue of data.issues)
+	{
+		try {
+			let createissue = await createGithubIssue(issue,fetchParams)
+			promises.push(createissue);
+			await myDelay();
+		}
+		catch(error)
+		{
+			return Promise.reject(error);
+		}
+	};
 	return Promise.all(promises);
 } 
 
@@ -237,7 +242,7 @@ function createComment(note,githubIssueNumber,params)
 	noteInit.body = JSON.stringify({body: note.text});
 	const url = `https://api.github.com/repos/${params.repo}/issues/${githubIssueNumber}/comments`;
 	return fetch(url,noteInit)
-		.then(data => logAndReturnJson('comment',data));
+		.then(data => logAndReturnJson('createComment',data));
 }
 
 async function createGitHubComments(issue,githubIssueNumber,params) 
@@ -249,8 +254,16 @@ async function createGitHubComments(issue,githubIssueNumber,params)
 	}
 	for (const note of issue.notes)
 	{
-		responses.push(await createComment(note,githubIssueNumber,params));
-		await myDelay();
+		try 
+		{
+			let c = await createComment(note,githubIssueNumber,params)
+			await myDelay();
+			responses.push(c);
+		}
+		catch(error)
+		{
+			return Promise.reject(error);
+		}
 	}
 	
 	return Promise.all(responses)
